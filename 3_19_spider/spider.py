@@ -9,21 +9,6 @@ import gzip
 from socket import error as SocketError
 import errno
 
-class Url(object):
-    """docstring for Url"""
-    cur_url = ""
-    last_url = ""
-    def __init__(self, cur_url, last_url):
-        super(Url, self).__init__()
-        self.cur_url = cur_url
-        self.last_url = last_url
-
-    def get_cur_url():
-        return self.cur_url
-        
-    def get_last_url():
-        return self.last_url
-
 
 class Spider(object):
     """docstring for Spider"""
@@ -32,6 +17,7 @@ class Spider(object):
     url_map = {}  #store as current_url: last_url 
     start_url = ""
     end_url = ""
+    count = 0
     pattern = re.compile('<a.*?href="(\w+)://(.*?)".*?>')
     def __init__(self, start_url, end_url):
         super(Spider, self).__init__()
@@ -40,22 +26,10 @@ class Spider(object):
         self.query.append(self.start_url)
         self.url_map[self.start_url] = ""
 
-    """bfs search"""
+    """search"""
     def run(self):
-        while self.query:
-            cur = self.query[0]
-            self.visited_urls.append(cur)
-            del self.query[0]
-            for new_url in self.get_urls(cur):
-                if  new_url not in self.query and new_url  not in self.visited_urls:
-                    self.url_map[new_url] = cur
-                    if new_url == self.end_url:
-                        print "success!"
-                        self.trace(new_url)
-                        return
-                    else:
-                        print new_url
-                        self.query.append(new_url)
+        pass
+
 
     """get urls from given url"""
     """ return string[] urls"""
@@ -107,46 +81,112 @@ class Spider(object):
             return webpage
         
 
-
     """trace routes"""
     def trace(self, url):
         result = []
-        result.append(url)
+        count = 0;
         print self.url_map[self.start_url]
         while url:
-            url = self.url_map[url.encode('utf-8')]
             result.append(url)
+            url = self.url_map[url.encode('utf-8')]
         while result:
+            count = count+1
             print result.pop()
+        print "Reached: " + str(self.count), "Link length: " + str(count)
 
 
+class BfsSpider(Spider):
+    def __init__(self, start_url, end_url):
+        Spider.__init__(self, start_url, end_url)
 
-    
+    """bfs search"""
+    def run(self):
+        while self.query:
+            if self.query:
+                cur = self.query[0]
+                self.visited_urls.append(cur)
+                del self.query[0]
+                for new_url in self.get_urls(cur):
+                    if  new_url not in self.query and new_url  not in self.visited_urls:
+                        self.count = self.count+1
+                        self.url_map[new_url] = cur
+                        if new_url == self.end_url:
+                            print "success!"
+                            self.trace(new_url)
+                            return
+                        else:
+                            print new_url
+                            self.query.append(new_url)
+
+class BiSpider(Spider):
+    """Bidirection Search"""
+    back_query = []
+    back_visited_urls = []
+    back_url_map = {}
+    def __init__(self, start_url, end_url):
+        Spider.__init__(self, start_url, end_url)
+        self.back_query.append(end_url)
+        self.back_url_map[end_url] = "" # forword end_url->nothing
+
+    def run(self):
+        # normal forward query
+        while self.query or self.back_query:
+            if self.query:
+                cur = self.query[0]
+                print cur
+                self.visited_urls.append(cur)
+                del self.query[0]
+                for new_url in self.get_urls(cur):
+                    if  new_url not in self.query and new_url not in self.visited_urls:
+                        self.count = self.count+1
+                        self.url_map[new_url] = cur # backword cur->last
+                        if new_url in self.back_visited_urls:
+                            print "success!"
+                            self.trace(new_url)
+                            return
+                        else:
+                            print new_url
+                            self.query.append(new_url)
+            if self.back_query:
+                cur = self.back_query[0]
+                self.back_visited_urls.append(cur)
+                del self.back_query[0]
+                for new_url in self.get_urls(cur):
+                    if new_url not in self.back_query and new_url not in self.back_visited_urls:
+                        self.count = self.count + 1
+                        self.back_url_map[new_url] = cur  #forword cur->next
+                        if new_url in self.visited_urls:
+                            print "success!"
+                            self.trace(new_url)
+                            return
+                        else:
+                            print new_url
+                            self.back_query.append(new_url) 
+
+    def trace(self, url):
+        temp1 = []
+        temp2 = []
+        hold = url
+        while url:
+            temp1.append(url)
+            url = self.url_map[url]
+        url = hold
+        while url:
+            url = self.back_url_map[url]
+            if url:
+                temp2.append(url)
+        result = temp1[::-1] + temp2
+        for url in result:
+            print url
+        print "Reached: " + str(self.count), "Link length: " + str(len(result))
+
+
 
 if __name__ == "__main__":
     if sys.argv[1] and sys.argv[2]:
-        cuteSpider = Spider(sys.argv[1], sys.argv[2])
+        cuteSpider = BiSpider(sys.argv[1], sys.argv[2])
         cuteSpider.run()
     else:
         print "Sorry.You should input the start url and the end url"
         print "eg: python spider.py http://www.baidu.com http://www.zhihu.com"
 
-
-
-
-# start_url = sys.argv[1]
-# end_url = sys.argv[2]
-# visited = []
-# pattern = re.compile('<a.*?href="(\w+)://(.*?)".*?>')
-
-# request = urllib2.Request(start_url)
-# response = urllib2.urlopen(request)
-# web_page = response.read()
-# if response.info().get('Content-Encoding') is "gzip":
-#     buf = StringIO.StringIO(response.read())
-#     f = gzip.GzipFile(fileobj=buf)
-#     content = f.read().decode("utf-8")
-# else:
-#     content = web_page.decode('utf-8')
-# for item in re.findall(pattern, content):
-#     print item[1][:item[1].find("/")]
