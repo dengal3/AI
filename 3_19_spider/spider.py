@@ -183,7 +183,7 @@ class BiSpider(Spider):
 
 
 if __name__ == "__main__":
-    if sys.argv[1] and sys.argv[2]:
+    if len(sys.argv) >= 2:
         cuteSpider = BiSpider(sys.argv[1], sys.argv[2])
         cuteSpider.run()
     else:
