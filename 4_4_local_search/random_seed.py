@@ -6,7 +6,7 @@ import random
 
 def main():
     f = open("test.txt", "w")
-    for k in xrange(1, 1000):
+    for k in xrange(1, 200):
         for num in random.sample([i for i in xrange(8)], 8):
             f.writelines(str(num) + " ")
         f.writelines("\r\n")

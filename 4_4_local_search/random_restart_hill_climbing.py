@@ -3,6 +3,7 @@
 # hill climb
 # based on 8-queen
 import copy
+import random
 
 class Node:
     """state node for 8-queen"""
@@ -14,20 +15,32 @@ class Node:
                 "y": queen[1]
             })
 
-"""high climb(steepest ascent)"""
-def steepestAscentHillClimbing(problem):
-    current, neighbor = [], []
+
+"""hill climb(random start)"""
+def randomStartHillClimbing(problem):
+    current, best = [], []
     #print "problem: ", problem
     current = Node(problem)
     #print "current: ", current.queens
     
     while True:
-        neighbor = getHighestValuedSuccessorOfCurrent(current)
-        if getValue(neighbor) >= getValue(current):
-            return current
-        current = copy.deepcopy(neighbor)
-        current.queens = copy.deepcopy(neighbor.queens)
+        best = getHighestValuedSuccessorOfCurrent(current)
+        if getValue(best) >= getValue(current):
+            # if not success try and try again
+            if getValue(current) != 0:
+                current = randomGenerateNode()
+            else:
+                return current
+        else:
+            current = copy.deepcopy(best)
+            current.queens = copy.deepcopy(best.queens)
 
+"""random generate a new state"""
+def randomGenerateNode():
+    newProblem = []
+    for col, num in enumerate(random.sample([i for i in xrange(8)], 8)):
+        newProblem.append([num, col])
+    return Node(newProblem)
 
 """the hightest one get the lowest value"""
 def getHighestValuedSuccessorOfCurrent(current):
@@ -96,7 +109,7 @@ def main():
         problem = line.split()  # read in 0 2 1 3 5 6 4 7
         problem = normalize(problem)   # formate the data above to the coordinate form
         
-        result = steepestAscentHillClimbing(problem)
+        result = randomStartHillClimbing(problem)
         if getValue(result) == 0:
             count += 1
             print "result:----------"
