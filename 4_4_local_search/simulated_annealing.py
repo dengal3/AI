@@ -3,6 +3,8 @@
 # hill climb
 # based on 8-queen
 import copy
+import random
+import math
 
 class Node:
     """state node for 8-queen"""
@@ -14,21 +16,38 @@ class Node:
                 "y": queen[1]
             })
 
+"""schedule for t"""
+def schedule(t):
+    pass
 
-"""hill climb(steepest ascent)"""
-def steepestAscentHillClimbing(problem):
+"""simulated annealing"""
+def simulatedAnnealing(problem):
     current, neighbor = [], []
     #print "problem: ", problem
     current = Node(problem)
     #print "current: ", current.queens
-    
+    t = 9999
     while True:
-        neighbor = getHighestValuedSuccessorOfCurrent(current)
-        if getValue(neighbor) >= getValue(current):
+        if t == 0:
             return current
-        current = copy.deepcopy(neighbor)
-        current.queens = copy.deepcopy(neighbor.queens)
+        neighbor = randomChoiceFromNeighbors(current)
+        diff = getValue(neighbor) - getValue(current)
+        #if getValue(neighbor) < getValue(current) climb hill!
+        if diff < 0:
+            current = copy.deepcopy(neighbor)
+            current.queens = copy.deepcopy(neighbor.queens)
+            if getValue(current) == 0:
+                return current
+        elif math.exp(-1*float(diff)/t) < random.random():
+            #print math.exp(-1*float(diff)/t)
+            current = copy.deepcopy(neighbor)
+            current.queens = copy.deepcopy(neighbor.queens)
+        # cooling t
+        t -= 1
 
+"""random choose a neighbor from neighbors"""
+def randomChoiceFromNeighbors(current):
+    return random.choice(getAllNeighbors(current))
 
 """the hightest one get the lowest value"""
 def getHighestValuedSuccessorOfCurrent(current):
@@ -99,7 +118,7 @@ def main():
         problem = line.split()  # read in 0 2 1 3 5 6 4 7
         problem = normalize(problem)   # formate the data above to the coordinate form
         
-        result = steepestAscentHillClimbing(problem)
+        result = simulatedAnnealing(problem)
         if getValue(result) == 0:
             count += 1
             print "result:----------"
