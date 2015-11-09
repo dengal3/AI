@@ -4,6 +4,7 @@
 # based on 8-queen
 import copy
 import random
+import random_seed
 
 class Node:
     """state node for 8-queen"""
@@ -22,12 +23,14 @@ def firstChoiceHillClimbing(problem):
     #print "problem: ", problem
     current = Node(problem)
     #print "current: ", current.queens
+    searched = 0
     
     while True:
         best = getHighestValuedSuccessorOfCurrent(current)
         if getValue(best) >= getValue(current):
-            return current
+            return current, searched
         neighbor = randomChoiceFromNeighbors(current)
+        searched += 56
         while getValue(neighbor) >= getValue(current):
             neighbor = randomChoiceFromNeighbors(current)
         current = copy.deepcopy(neighbor)
@@ -99,22 +102,26 @@ def normalize(problem):
     return output
 
 def main():
+    random_seed.random_generate()
     f = open("test.txt", "r")
     count = 0
     amount = 0
+    allSearched = 0
     for line in f:
         amount += 1
         problem = line.split()  # read in 0 2 1 3 5 6 4 7
         problem = normalize(problem)   # formate the data above to the coordinate form
         
-        result = firstChoiceHillClimbing(problem)
+        (result, nodeSearched) = firstChoiceHillClimbing(problem)
         if getValue(result) == 0:
             count += 1
+            allSearched += nodeSearched
             print "result:----------"
             for queen in result.queens:
                 print queen
     f.close()
     print "All input tests: ", amount
+    print "Average searched: ", allSearched/count
     print "Successful tests: ", count, "("+str(float(count)/amount)+")"
 
 if __name__ == "__main__":

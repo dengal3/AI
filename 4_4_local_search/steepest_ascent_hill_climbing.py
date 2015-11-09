@@ -3,6 +3,7 @@
 # hill climb
 # based on 8-queen
 import copy
+import random_seed
 
 class Node:
     """state node for 8-queen"""
@@ -21,11 +22,13 @@ def steepestAscentHillClimbing(problem):
     #print "problem: ", problem
     current = Node(problem)
     #print "current: ", current.queens
+    searched = 0
     
     while True:
         neighbor = getHighestValuedSuccessorOfCurrent(current)
+        searched += 56; 
         if getValue(neighbor) >= getValue(current):
-            return current
+            return current, searched
         current = copy.deepcopy(neighbor)
         current.queens = copy.deepcopy(neighbor.queens)
 
@@ -91,22 +94,26 @@ def normalize(problem):
     return output
 
 def main():
+    random_seed.random_generate()
     f = open("test.txt", "r")
     count = 0
     amount = 0
+    allSearched = 0
     for line in f:
         amount += 1
         problem = line.split()  # read in 0 2 1 3 5 6 4 7
         problem = normalize(problem)   # formate the data above to the coordinate form
         
-        result = steepestAscentHillClimbing(problem)
+        (result, nodeSearched) = steepestAscentHillClimbing(problem)
         if getValue(result) == 0:
             count += 1
+            allSearched += nodeSearched
             print "result:----------"
             for queen in result.queens:
                 print queen
     f.close()
     print "All input tests: ", amount
+    print "Average cost: ", allSearched/count
     print "Successful tests: ", count, "("+str(float(count)/amount)+")"
 
 if __name__ == "__main__":
